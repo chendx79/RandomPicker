@@ -9,7 +9,9 @@ import (
 	"os"
 )
 
-func openfile() {
+func readNamesFromExcelFile() []string{
+	var names []string
+
     xlsx, err := excelize.OpenFile("./data.xlsx")
     if err != nil {
         fmt.Println("Excel file openning error:{0}", err)
@@ -25,14 +27,17 @@ func openfile() {
 		if len(row) == 0{
 			break
 		}
-		fmt.Println(row[0])
-    }
+		names = append(names, row[0])
+	}
+	return names
 }
 
 func main() {
+	var names []string
+	names = readNamesFromExcelFile()
+	fmt.Println(len(names))
+	
 	// var inTE, outTE *walk.TextEdit
-
-	openfile()
 
 	// MainWindow{
 	// 	Title:   "SCREAMO",
