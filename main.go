@@ -1,58 +1,56 @@
 package main
 
 import (
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
-	"strings"
+	// "github.com/lxn/walk"
+	// . "github.com/lxn/walk/declarative"
+	// "strings"
 	"github.com/xuri/excelize"
 	"fmt"
 	"os"
-	"strconv"
 )
 
 func openfile() {
-    xlsx, err := excelize.OpenFile("./data.xls")
+    xlsx, err := excelize.OpenFile("./data.xlsx")
     if err != nil {
-        fmt.Println(err)
+        fmt.Println("Excel file openning error:{0}", err)
         os.Exit(1)
-    }
-    // Get value from cell by given sheet index and axis.
-    cell, _ := xlsx.GetCellValue("Sheet1", "A2")
-    fmt.Println(cell)
-    // Get sheet index.
-    index := xlsx.GetSheetIndex("Sheet1")
-    // Get all the rows in a sheet.
-    rows, _ := xlsx.GetRows("sheet" + strconv.Itoa(index))
-    for _, row := range rows {
-        for _, colCell := range row {
-            fmt.Print(colCell, "\t")
-        }
-        fmt.Println()
+	}
+	
+	// Get all the rows in a sheet.
+	rows, _ := xlsx.GetRows("Sheet1")
+    for i, row := range rows {
+		if i == 0{
+			continue
+		}
+		if len(row) == 0{
+			break
+		}
+		fmt.Println(row[0])
     }
 }
 
 func main() {
-	var inTE, outTE *walk.TextEdit
+	// var inTE, outTE *walk.TextEdit
 
 	openfile()
 
-	MainWindow{
-		Title:   "SCREAMO",
-		MinSize: Size{600, 400},
-		Layout:  VBox{},
-		Children: []Widget{
-			HSplitter{
-				Children: []Widget{
-					TextEdit{AssignTo: &inTE},
-					TextEdit{AssignTo: &outTE, ReadOnly: true},
-				},
-			},
-			PushButton{
-				Text: "SCREAM",
-				OnClicked: func() {
-					outTE.SetText(strings.ToUpper(inTE.Text()))
-				},
-			},
-		},
-	}.Run()
+	// MainWindow{
+	// 	Title:   "SCREAMO",
+	// 	MinSize: Size{600, 400},
+	// 	Layout:  VBox{},
+	// 	Children: []Widget{
+	// 		HSplitter{
+	// 			Children: []Widget{
+	// 				TextEdit{AssignTo: &inTE},
+	// 				TextEdit{AssignTo: &outTE, ReadOnly: true},
+	// 			},
+	// 		},
+	// 		PushButton{
+	// 			Text: "SCREAM",
+	// 			OnClicked: func() {
+	// 				outTE.SetText(strings.ToUpper(inTE.Text()))
+	// 			},
+	// 		},
+	// 	},
+	// }.Run()
 }
