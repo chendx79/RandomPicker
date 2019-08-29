@@ -33,7 +33,7 @@ func readNamesFromExcelFile() []string{
 }
 
 func main() {
-	mw := &MyMainWindow{model: NewEnvModel()}
+	mw := &MyMainWindow{fromModel: NewFromModel(), randModel: NewRandModel()}
 
 	if _, err := (MainWindow{
 		AssignTo: &mw.MainWindow,
@@ -42,16 +42,38 @@ func main() {
 		Size:     Size{300, 400},
 		Layout:   VBox{MarginsZero: true},
 		Children: []Widget{
+			PushButton{
+				Text: "重置",
+				OnClicked: func() {
+
+				},
+			},
 			HSplitter{
 				Children: []Widget{
 					ListBox{
-						AssignTo: &mw.lb,
-						Model:    mw.model,
+						AssignTo: &mw.lbFrom,
+						Model:    mw.fromModel,
 					},
-					TextEdit{
-						AssignTo: &mw.te,
-						ReadOnly: true,
+					TableView{
+						AssignTo:      &mw.lbRand,
+						Columns: []TableViewColumn{
+							TableViewColumn{
+								DataMember: "顺序",
+								Width:      50,
+							},
+							TableViewColumn{
+								DataMember: "姓名",
+								Width:      64,
+							},
+						},
+						Model: mw.randModel,
 					},
+				},
+			},
+			PushButton{
+				Text: "随机选取",
+				OnClicked: func() {
+					mw.randModel.RandPerson()
 				},
 			},
 		},
@@ -62,21 +84,22 @@ func main() {
 
 type MyMainWindow struct {
 	*walk.MainWindow
-	model *EnvModel
-	lb    *walk.ListBox
-	te    *walk.TextEdit
+	fromModel *FromModel
+	randModel *RandModel
+	lbFrom    *walk.ListBox
+	lbRand    *walk.TableView
 }
 
-type EnvModel struct {
+type FromModel struct {
 	walk.ListModelBase
 	items []string
 }
 
-func NewEnvModel() *EnvModel {
+func NewFromModel() *FromModel {
 	var names []string
 	names = readNamesFromExcelFile()
 
-	m := &EnvModel{items: make([]string, len(names))}
+	m := &FromModel{items: make([]string, len(names))}
 
 	for i, e := range names {
 		m.items[i] = e
@@ -85,10 +108,35 @@ func NewEnvModel() *EnvModel {
 	return m
 }
 
-func (m *EnvModel) ItemCount() int {
+func (m *FromModel) ItemCount() int {
 	return len(m.items)
 }
 
-func (m *EnvModel) Value(index int) interface{} {
+func (m *FromModel) Value(index int) interface{} {
 	return m.items[index]
+}
+
+type Person struct {
+	Index int
+	Name  string
+}
+
+type RandModel struct {
+	walk.SortedReflectTableModelBase
+	items []Person
+}
+
+func NewRandModel() *RandModel {
+	m := &RandModel{items: make([]Person, 0)}
+
+	return m
+}
+
+func (m *RandModel) Items() interface{} {
+	return m.items
+}
+
+func (m *RandModel) RandPerson() {
+	// newItems := append(m.items, "1")
+	// m = &RandModel{items: newItems}
 }
