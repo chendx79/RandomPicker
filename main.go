@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"log"
+	"math/rand"
+	"time"
 )
 
 func readNamesFromExcelFile() []string{
@@ -42,10 +44,22 @@ func main() {
 		Size:     Size{300, 400},
 		Layout:   VBox{MarginsZero: true},
 		Children: []Widget{
+			Label{
+				MaxSize: Size{300, 20},
+				Font:     Font{PointSize: 12},
+				Alignment:AlignHCenterVCenter,
+				Text:    `请点击随机选取按钮`,
+				AssignTo:&mw.labelMsg,
+			},
 			PushButton{
 				Text: "重置",
+				Font:     Font{PointSize: 12},
 				OnClicked: func() {
-
+					mw.randModel.EmptyPersons()
+					mw.fromModel.items = make([]string, len(mw.fromModel.itemsImported))
+					copy(mw.fromModel.items, mw.fromModel.itemsImported)
+					mw.lbFrom.SetModel(mw.fromModel.items)
+					mw.labelMsg.SetText("列表已重置")
 				},
 			},
 			HSplitter{
@@ -72,8 +86,19 @@ func main() {
 			},
 			PushButton{
 				Text: "随机选取",
+				Font:     Font{PointSize: 12},
 				OnClicked: func() {
-					mw.randModel.RandPerson()
+					if len(mw.fromModel.items) > 0{
+						r := rand.New(rand.NewSource(time.Now().Unix()))
+						randIndex := r.Intn(len(mw.fromModel.items))
+						
+						name := mw.fromModel.items[randIndex]
+						mw.randModel.AddPerson(name)
+						mw.fromModel.items = append(mw.fromModel.items[:randIndex], mw.fromModel.items[randIndex+1:]...)
+						mw.lbFrom.SetModel(mw.fromModel.items)
+						msg := fmt.Sprintf("顺序%d, %s", len(mw.randModel.items), name)
+						mw.labelMsg.SetText(msg)
+					}
 				},
 			},
 		},
@@ -88,10 +113,12 @@ type MyMainWindow struct {
 	randModel *RandModel
 	lbFrom    *walk.ListBox
 	lbRand    *walk.TableView
+	labelMsg  *walk.Label
 }
 
 type FromModel struct {
 	walk.ListModelBase
+	itemsImported []string
 	items []string
 }
 
@@ -99,11 +126,13 @@ func NewFromModel() *FromModel {
 	var names []string
 	names = readNamesFromExcelFile()
 
-	m := &FromModel{items: make([]string, len(names))}
+	m := &FromModel{items: make([]string, len(names)), itemsImported: make([]string, len(names))}
 
 	for i, e := range names {
 		m.items[i] = e
 	}
+
+	copy(m.itemsImported, m.items)
 
 	return m
 }
@@ -122,21 +151,40 @@ type Person struct {
 }
 
 type RandModel struct {
-	walk.SortedReflectTableModelBase
-	items []Person
+	walk.TableModelBase
+	items []*Person
 }
-
+ 
 func NewRandModel() *RandModel {
-	m := &RandModel{items: make([]Person, 0)}
-
+	m := &RandModel{items: make([]*Person, 0)}
 	return m
 }
 
-func (m *RandModel) Items() interface{} {
-	return m.items
+func (m *RandModel) EmptyPersons() {
+	m.items = make([]*Person, 0)
+	m.PublishRowsReset()
 }
 
-func (m *RandModel) RandPerson() {
-	// newItems := append(m.items, "1")
-	// m = &RandModel{items: newItems}
+func (m *RandModel) AddPerson(name string) {
+	m.items = append(m.items, &Person{Index:len(m.items) + 1, Name: name})
+	m.PublishRowsReset()
+}
+
+func (m *RandModel) RowCount() int {
+	return len(m.items)
+}
+
+// Called by the TableView when it needs the text to display for a given cell.
+func (m *RandModel) Value(row, col int) interface{} {
+	item := m.items[row]
+
+	switch col {
+	case 0:
+		return item.Index
+
+	case 1:
+		return item.Name
+	}
+
+	panic("unexpected col")
 }
